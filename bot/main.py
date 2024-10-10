@@ -39,9 +39,22 @@ async def stop(ctx):
         await ctx.send("Not connected to a voice channel.")
 
 @bot.command()
+async def pause(ctx):
+    if ctx.voice_client.is_playing():
+        ctx.voice_client.pause()
+    else:
+        ctx.voice_client.resume()
+
+@bot.command()
+async def resume(ctx):
+    if not ctx.voice_client.is_playing():
+        ctx.voice_client.resume()
+
+@bot.command()
 async def stream(ctx):
     global current_spotify_song
 
+    await ctx.send(f"Streaming music from spotify.")
     while True:
         new_song = get_current_song()
 
@@ -66,14 +79,14 @@ async def stream(ctx):
 @bot.command()
 async def queue(ctx, *, song: str = None):
     if song is None:
-        await queue_check(ctx)
+        await check(ctx)
     else:
         song_queue.append(song)
         await ctx.send(f"{song} was added to queue.")
 
 
 @bot.command()
-async def queue_check(ctx):
+async def check(ctx):
     if len(song_queue) == 0:
         await ctx.send("The queue is empty.")
     else:
@@ -84,23 +97,23 @@ async def queue_check(ctx):
 
 async def play_queue(ctx):
     if len(song_queue) == 0:
-        ctx.send("Queue is empty! Use !queue [name] to add music to queue")
+        await ctx.send("Queue is empty! Use !queue [name] to add music to queue")
     else:
-        for name in song_queue:
-            play(name)
+        song_to_play = song_queue.pop(0)
+        player = await YTDLSource.from_url(song_to_play, loop=bot.loop)
+        if not ctx.voice_client.is_playing():
+            next_song = play_queue(ctx)
+            ctx.voice_client.play(player, after = await next_song)
 
 @bot.command()
 async def play(ctx, *, search: str = None):
     if ctx.author.voice:
-        # Join the voice channel if not already connected
         channel = ctx.author.voice.channel
         if ctx.voice_client is None:
             await channel.connect()
 
-        if search == 'None':
-        # Start the Spotify playing loop
-            ctx.send(f"Playing {song_queue.pop[0]} from queue.")
-            await play_queue()
+        if search is None:
+            await play_queue(ctx)
 
         else:
             await ctx.send(f"Playing {search}")
@@ -108,5 +121,17 @@ async def play(ctx, *, search: str = None):
             ctx.voice_client.play(player)
     else:
         await ctx.send("You need to be in a voice channel to play music.")
+
+@bot.command()
+async def skip(ctx):
+    if len(song_queue) == 1:
+        ctx.voice_client.pause()
+    if len(song_queue) >= 2:
+        ctx.voice_client.stop()
+        await play(ctx)
+
+@bot.command()
+async def clear(ctx):
+    ...
 
 bot.run("MTI4NDkxNzQ4MDczNjk0ODI1NQ.GSJiJm.AyXIhRcMEtDeRRprXys5PM6_9YNzCVb4QrTpts")

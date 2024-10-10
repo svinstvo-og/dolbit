@@ -47,13 +47,3 @@ def search_youtube(query):
         except Exception as e:
             print(f"Error: {e}")
             return None
-        
-
-'''def test():
-    song, artist = get_current_song()
-    if song and artist:
-        query = f"{song} {artist}"
-        youtube_url = search_youtube(query)
-    return youtube_url
-
-test()'''

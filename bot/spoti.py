@@ -14,3 +14,5 @@ def get_current_song():
         return f"{current_playback['item']['name']}, {current_playback['item']['artists'][0]['name']}"
     else:
         return None
+    
+#print(get_current_song())
